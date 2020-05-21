@@ -5,6 +5,7 @@ import os.path as osp
 import tarfile
 import zipfile
 import torch
+from collections import defaultdict
 
 from torchreid.utils import read_image, download_url, mkdir_if_missing
 
@@ -32,6 +33,7 @@ class Dataset(object):
         train,
         query,
         gallery,
+        loss='softmax',
         transform=None,
         mode='train',
         combineall=False,
@@ -43,6 +45,7 @@ class Dataset(object):
         self.gallery = gallery
         self.transform = transform
         self.mode = mode
+        self.loss = loss
         self.combineall = combineall
         self.verbose = verbose
 
@@ -63,6 +66,11 @@ class Dataset(object):
                 'Invalid mode. Got {}, but expected to be '
                 'one of [train | query | gallery]'.format(self.mode)
             )
+
+        if self.loss == "contrastive" or self.loss == 'triplet':
+            self.pid_indices = defaultdict(list)
+            for i, (img_path, pid, camid) in enumerate(self.data):
+                self.pid_indices[pid].append(i)
 
         if self.verbose:
             self.show_summary()
@@ -261,11 +269,34 @@ class ImageDataset(Dataset):
         super(ImageDataset, self).__init__(train, query, gallery, **kwargs)
 
     def __getitem__(self, index):
-        img_path, pid, camid = self.data[index]
-        img = read_image(img_path)
-        if self.transform is not None:
-            img = self.transform(img)
-        return img, pid, camid, img_path
+        if self.loss == 'softmax':
+            img_path, pid, camid = self.data[index]
+            img = read_image(img_path)
+            if self.transform is not None:
+                img = self.transform(img)
+            return img, pid, camid, img_path
+        elif self.loss == 'contrastive' or self.loss == 'triplet':
+            img_path1, pid1, camid1 = self.data[index]
+            img1 = read_image(img_path1)
+            if self.transform is not None:
+                img1 = self.transform(img1)
+
+            indices = self.pid_indices[pid1]
+            if torch.rand(1) > 0.5:
+                # Half times take image with the same pid
+                index2 = indices[torch.randint(high=len(indices), size=(1, 1)).item()]
+            else:
+                # Half time take random image (high probability being different pid
+                index2 = torch.randint(high=len(self.data), size=(1, 1)).item()
+
+            img_path2, pid2, camid2 = self.data[index2]
+            img2 = read_image(img_path2)
+            if self.transform is not None:
+                img2 = self.transform(img2)
+
+            return [img1, img2], [pid1, pid2], [camid1, camid2], [img_path1, img_path2]
+        else:
+            raise NotImplementedError
 
     def show_summary(self):
         num_train_pids, num_train_cams = self.parse_data(self.train)
@@ -276,8 +307,7 @@ class ImageDataset(Dataset):
         print('  ----------------------------------------')
         print('  subset   | # ids | # images | # cameras')
         print('  ----------------------------------------')
-        print(
-            '  train    | {:5d} | {:8d} | {:9d}'.format(
+        print('  train    | {:5d} | {:8d} | {:9d}'.format(
                 num_train_pids, len(self.train), num_train_cams
             )
         )

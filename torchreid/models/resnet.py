@@ -4,6 +4,7 @@ Code source: https://github.com/pytorch/vision
 from __future__ import division, absolute_import
 import torch.utils.model_zoo as model_zoo
 from torch import nn
+import os
 
 __all__ = [
     'resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152',
@@ -365,7 +366,7 @@ class ResNet(nn.Module):
 
         if self.loss == 'softmax':
             return y
-        elif self.loss == 'triplet':
+        elif self.loss == 'triplet' or self.loss == 'contrastive':
             return y, v
         else:
             raise KeyError("Unsupported loss: {}".format(self.loss))
@@ -376,6 +377,7 @@ def init_pretrained_weights(model, model_url):
     
     Layers that don't match with pretrained layers in name or size are kept unchanged.
     """
+    os.environ['TORCH_HOME'] = 'resnet/'
     pretrain_dict = model_zoo.load_url(model_url)
     model_dict = model.state_dict()
     pretrain_dict = {
