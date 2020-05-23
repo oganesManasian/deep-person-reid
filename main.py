@@ -2,28 +2,37 @@ import torchreid
 import torch
 
 torch.cuda.set_device(0)
-DATASET_DIR = '../../adaimi'
 LOSS = 'contrastive'  # Options softmax, triplet, contrastive
-LOG_DIR = f'log/resnet50_{LOSS}'
+MODEL_NAME = 'resnet50'
+PRETRAINED = True
+EPOCHS = 50
+DATASET_DIR = '../../adaimi'
+
+LOG_DIR = f'log/{MODEL_NAME}_{LOSS}_pretrained:{PRETRAINED}'
+if LOSS == 'softmax':
+    train_sampler = 'RandomSampler'
+elif LOSS == 'triplet' or LOSS == 'contrastive':
+    train_sampler = 'RandomIdentitySampler'
+else:
+    raise NotImplementedError
+
 
 datamanager = torchreid.data.ImageDataManager(
-    # root='reid-data',
     root=DATASET_DIR,
     sources='msmt17',
     targets='msmt17',
     height=256,
     width=128,
     batch_size_train=32,
-    # batch_size_train=5,
     batch_size_test=100,
-    loss=LOSS
+    train_sampler=train_sampler
 )
 
 model = torchreid.models.build_model(
-    name='resnet50',
+    name=MODEL_NAME,
     num_classes=datamanager.num_train_pids,
     loss=LOSS,
-    pretrained=True,
+    pretrained=PRETRAINED,
     use_gpu=True
 )
 
@@ -56,7 +65,7 @@ elif LOSS == "triplet":
         optimizer=optimizer,
         scheduler=scheduler,
         label_smooth=True,
-        margin=10,
+        margin=0.3,
         weight_x=0
     )
 elif LOSS == "contrastive":
@@ -66,7 +75,7 @@ elif LOSS == "contrastive":
         optimizer=optimizer,
         scheduler=scheduler,
         label_smooth=True,
-        margin=10,
+        margin=0.3,
         weight_x=0
     )
 else:
@@ -74,8 +83,8 @@ else:
 
 engine.run(
     save_dir=LOG_DIR,
-    max_epoch=100,
+    max_epoch=EPOCHS,
     eval_freq=10,
-    print_freq=100,
+    print_freq=300,
     test_only=False
 )

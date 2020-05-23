@@ -1,7 +1,5 @@
 from __future__ import division, print_function, absolute_import
 
-import torch
-
 from torchreid import metrics
 from torchreid.losses import TripletLoss, CrossEntropyLoss
 
@@ -91,8 +89,6 @@ class ImageTripletEngine(Engine):
         )
 
     def forward_backward(self, data):
-        for i in [0, 1]:
-            data[i] = torch.cat((data[i][0], data[i][1]))
         imgs, pids = self.parse_data_for_train(data)
 
         if self.use_gpu:

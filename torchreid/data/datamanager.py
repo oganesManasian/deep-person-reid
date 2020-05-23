@@ -165,7 +165,6 @@ class ImageDataManager(DataManager):
         cuhk03_labeled=False,
         cuhk03_classic_split=False,
         market1501_500k=False,
-        loss='softmax'
     ):
 
         super(ImageDataManager, self).__init__(
@@ -192,7 +191,6 @@ class ImageDataManager(DataManager):
                 cuhk03_labeled=cuhk03_labeled,
                 cuhk03_classic_split=cuhk03_classic_split,
                 market1501_500k=market1501_500k,
-                loss=loss
             )
             trainset.append(trainset_)
         trainset = sum(trainset)

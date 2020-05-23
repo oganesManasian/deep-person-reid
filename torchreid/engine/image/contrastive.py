@@ -1,7 +1,5 @@
 from __future__ import division, print_function, absolute_import
 
-import torch
-
 from torchreid import metrics
 from torchreid.losses import ContrastiveLoss, CrossEntropyLoss
 
@@ -91,26 +89,6 @@ class ImageContrastiveEngine(Engine):
         )
 
     def forward_backward(self, data):
-        # batch_imgs, batch_pids = self.parse_data_for_train(data)
-        #
-        # if self.use_gpu:
-        #     for i in [0, 1]:
-        #         batch_imgs[i] = batch_imgs[i].cuda()
-        #         batch_pids[i] = batch_pids[i].cuda()
-        #
-        # batch_outputs = []
-        # batch_features = []
-        # for i in [0, 1]:
-        #     outputs, features = self.model(batch_imgs[i])
-        #     batch_outputs.append(outputs)
-        #     batch_features.append(features)
-        #
-        # loss_c = self.compute_loss(self.criterion_c, batch_features, batch_pids)
-        # batch_loss_x = [self.compute_loss(self.criterion_x, batch_outputs[i], batch_pids[i]) for i in [0, 1]]
-        # loss = self.weight_c * loss_c + self.weight_x * (batch_loss_x[0] + batch_loss_x[1])
-
-        for i in [0, 1]:
-            data[i] = torch.cat((data[i][0], data[i][1]))
         imgs, pids = self.parse_data_for_train(data)
 
         if self.use_gpu:
