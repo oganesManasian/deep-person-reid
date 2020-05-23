@@ -1,3 +1,20 @@
+Our contibution:
+===========
+
+**Implemented contrastive loss.**
+
+For that we added the following two .py files:
+
+* engine/image/contrastive.py - forward, backward methods for model with contrastive loss 
+* losses/contrastive.py - calculation of contrastive loss
+
+In addition, we provide the scripts we have used for model training:
+
+* ``best_model.py`` - the code for training our best model (please refer to our report)
+* ``main.py`` - a generic code for training with different settings 
+
+Our best model weights can be found with `here <https://drive.google.com/drive/folders/1G7dBhVT9c-Si46dEGseri6onDChO_TWG?usp=sharing>`_.
+
 Torchreid
 ===========
 Torchreid is a library for deep-learning person re-identification, written in `PyTorch <https://pytorch.org/>`_.
